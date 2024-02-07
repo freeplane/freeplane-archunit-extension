@@ -1,0 +1,97 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+group 'org.freeplane.archunit'
+version = '0.0.1'
+
+targetCompatibility='1.8'
+sourceCompatibility='1.8'
+
+repositories {
+    mavenCentral()
+	maven { url "${project.gradle.gradleUserHomeDir}/local-artifacts" }
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.10.1'
+	compileOnly 'com.tngtech.archunit:archunit:1.2.1'
+	testImplementation 'com.tngtech.archunit:archunit:1.2.1'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
+	testImplementation 'com.tngtech.archunit:archunit-junit5:1.2.1'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
+	testImplementation 'org.mockito:mockito-core:4.6.1'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.6.1'
+}
+
+task sourceJar(type: Jar) {
+    archiveClassifier = 'sources'
+    from (sourceSets.main.allSource)
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  archiveClassifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+build.dependsOn javadoc
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+			artifact jar
+			artifact sourceJar
+			artifact javadocJar
+            pom {
+                name = project.name
+                description = 'Application and java components for html'
+                url = 'https://github.com/freeplane/freeplane-archunit-extension'
+
+                scm {
+                    url = 'https://github.com/freeplane/freeplane-archunit-extension'
+                    connection = 'https://github.com/freeplane/freeplane-archunit-extension.git'
+                    developerConnection = 'git@github.com:freeplane/freeplane-archunit-extension.git'
+                }
+
+                licenses {
+                    license {
+                        name = 'The Apache Software License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'dpolivaev'
+                        name = 'Dimitry Polivaev'
+                        email = 'dpolivaev@gmx.de'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+        	name = 'central'
+            url = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            credentials {
+                username project.findProperty('ossrhUsername') ?: '-'
+                password project.findProperty('ossrhPassword') ?: '-'
+            }
+        }
+        maven {
+        	name = 'localartifacts'
+			url  = "${project.gradle.gradleUserHomeDir}/local-artifacts"
+		}
+    }
+}
+
+signing {
+    sign publishing.publications.maven
+}
+
+javadoc {
+    enabled = true
+    options.encoding = "UTF-8"
+    failOnError = false
+}
