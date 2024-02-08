@@ -10,28 +10,26 @@ import java.util.Set;
 import java.util.SortedSet;
 
 public class EvaluatedRuleDto {
-    final public Set<String> importedClassUris;
     final public String violatedRuleDescription;
+    final public Set<String> violatingClassLocations;
     final public List<String> violationDescriptions;
-    final public Set<String> violatingClasses;
     final public Set<String> violationDependencyDescriptions;
-    public EvaluatedRuleDto(SortedSet<String> importedClassUris, String violatedRuleDescription,
+    public EvaluatedRuleDto(String violatedRuleDescription,
+            SortedSet<String> violatingClassLocations,
             List<String> violationDescriptions,
-            SortedSet<String> violatingClasses,
             SortedSet<String> violationDependencyDescriptions) {
         super();
-        this.importedClassUris = importedClassUris;
         this.violatedRuleDescription = violatedRuleDescription;
+        this.violatingClassLocations = violatingClassLocations;
         this.violationDescriptions = violationDescriptions;
-        this.violatingClasses = violatingClasses;
         this.violationDependencyDescriptions = violationDependencyDescriptions;
     }
     @Override
     public String toString() {
-        return "EvaluatedRuleDto [importedClassUris=" + importedClassUris + "\n"
+        return "EvaluatedRuleDto ["
                 + "violatedRuleDescription=" + violatedRuleDescription + "\n"
+                + "violatingClassLocations=" + violatingClassLocations + "\n"
                 + "violationDescriptions=" + violationDescriptions + "\n"
-                + "violatingClasses=" + violatingClasses + "\n"
                 + "violationDependencyDescriptions=" + violationDependencyDescriptions + "]";
     }
 

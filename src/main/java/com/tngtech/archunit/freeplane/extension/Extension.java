@@ -7,9 +7,11 @@ package com.tngtech.archunit.freeplane.extension;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -53,19 +55,19 @@ public class Extension  implements ArchUnitExtension {
         final EvaluationResult result = evaluatedRule.getResult();
         if(! result.hasViolation())
             return;
-        SortedSet<String> locationSpecs = evaluatedRule.getClasses().stream()
-        .map(JavaClass::getSource)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .map(Source::getUri)
-        .map(Object::toString)
-        .collect(Collectors.toCollection(TreeSet::new));
-        List<String> violationDescriptions = new ArrayList<>();
-        SortedSet<String> violatingClasses = new TreeSet<>();
+         List<String> violationDescriptions = new ArrayList<>();
+        Set<JavaClass> violatingClasses = new HashSet<>();
         SortedSet<String> violationDependencyDescriptions = new TreeSet<>();
         result.handleViolations((violatingObjects, message) -> handle(violatingObjects, message, violationDescriptions, violatingClasses, violationDependencyDescriptions));
-        final EvaluatedRuleDto data = new EvaluatedRuleDto(locationSpecs, evaluatedRule.getRule().getDescription(),
-                violationDescriptions, violatingClasses, violationDependencyDescriptions);
+        SortedSet<String> locationSpecs = evaluatedRule.getClasses().stream()
+                .map(JavaClass::getSource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(Source::getUri)
+                .map(Object::toString)
+                .collect(Collectors.toCollection(TreeSet::new));
+       final EvaluatedRuleDto data = new EvaluatedRuleDto(evaluatedRule.getRule().getDescription(), locationSpecs,
+                violationDescriptions, violationDependencyDescriptions);
         freeplaneClient.sendJson(data);
         System.out.println(data);
         System.out.println();
@@ -85,18 +87,18 @@ public class Extension  implements ArchUnitExtension {
 
     }
 
-    private void handle(Collection<Object> violatingObjects, String message, Collection<String> violationDescriptions, Collection<String> violatingClasses, Collection<String> violationDependencyDescriptions) {
+    private void handle(Collection<Object> violatingObjects, String message, Collection<String> violationDescriptions, Collection<JavaClass> violatingClasses, Collection<String> violationDependencyDescriptions) {
         violationDescriptions.add(message);
         violatingObjects.forEach(violatingObject -> handle(violatingObject, violatingClasses, violationDependencyDescriptions));
     }
 
-    private void handle(Object violatingObject, Collection<String> violatingClasses, Collection<String> violationDependencyDescriptions) {
+    private void handle(Object violatingObject, Collection<JavaClass> violatingClasses, Collection<String> violationDependencyDescriptions) {
         if(violatingObject instanceof JavaAccess<?>) {
             final JavaAccess<?> javaAccess = (JavaAccess<?>)violatingObject;
             final JavaClass originOwner = javaAccess.getOriginOwner();
             final JavaClass targetOwner = javaAccess.getTargetOwner();
-            violatingClasses.add(originOwner.getFullName());
-            violatingClasses.add(targetOwner.getFullName());
+            violatingClasses.add(originOwner);
+            violatingClasses.add(targetOwner);
             violationDependencyDescriptions.add(javaAccess.getDescription());
             return;
         }
@@ -105,9 +107,9 @@ public class Extension  implements ArchUnitExtension {
             cycle.getEdges().forEach(edge -> {
                 final Object origin = edge.getOrigin();
                 if(origin instanceof Slice)
-                    ((Slice)origin).forEach(c -> violatingClasses.add(c.getFullName()));
+                    ((Slice)origin).forEach(violatingClasses::add);
                 else if (origin instanceof ArchModule<?>) {
-                 ((ArchModule<?>)origin).forEach(c -> violatingClasses.add(c.getFullName()));
+                 ((ArchModule<?>)origin).forEach(violatingClasses::add);
                 }
             });
             return;
