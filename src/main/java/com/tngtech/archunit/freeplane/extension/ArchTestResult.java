@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 
-public class EvaluatedRuleDto {
+public class ArchTestResult {
     final public String violatedRuleDescription;
     final public Set<String> violatingClassLocations;
     final public List<String> violationDescriptions;
     final public Set<String> violationDependencyDescriptions;
-    public EvaluatedRuleDto(String violatedRuleDescription,
+    public ArchTestResult(String violatedRuleDescription,
             SortedSet<String> violatingClassLocations,
             List<String> violationDescriptions,
             SortedSet<String> violationDependencyDescriptions) {
@@ -26,7 +26,7 @@ public class EvaluatedRuleDto {
     }
     @Override
     public String toString() {
-        return "EvaluatedRuleDto ["
+        return "ArchTestResult ["
                 + "violatedRuleDescription=" + violatedRuleDescription + "\n"
                 + "violatingClassLocations=" + violatingClassLocations + "\n"
                 + "violationDescriptions=" + violationDescriptions + "\n"

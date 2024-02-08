@@ -29,17 +29,17 @@ class FreeplaneClient {
     }
 
 
-    void sendJson(EvaluatedRuleDto data) {
+    void sendJson(ArchTestResult data) {
         Gson gson = new Gson();
         String jsonData = gson.toJson(data); // Serializing
 
         try (Socket socket = new Socket(host, port);
              OutputStream output = socket.getOutputStream();
              PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, "UTF-8"), true)) {
-
             writer.println(jsonData);
+            LOGGER.info("Sent data to Freeplane");
         } catch (IOException e) {
-            LOGGER.error("Can't send data to Freeplane", e);
+            LOGGER.error("Can't send data to Freeplane");
         }
     }
 }

@@ -55,36 +55,22 @@ public class Extension  implements ArchUnitExtension {
         final EvaluationResult result = evaluatedRule.getResult();
         if(! result.hasViolation())
             return;
-         List<String> violationDescriptions = new ArrayList<>();
+        List<String> violationDescriptions = new ArrayList<>();
         Set<JavaClass> violatingClasses = new HashSet<>();
         SortedSet<String> violationDependencyDescriptions = new TreeSet<>();
         result.handleViolations((violatingObjects, message) -> handle(violatingObjects, message, violationDescriptions, violatingClasses, violationDependencyDescriptions));
-        SortedSet<String> locationSpecs = evaluatedRule.getClasses().stream()
+        SortedSet<String> locationSpecs = violatingClasses.stream()
                 .map(JavaClass::getSource)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(Source::getUri)
                 .map(Object::toString)
                 .collect(Collectors.toCollection(TreeSet::new));
-       final EvaluatedRuleDto data = new EvaluatedRuleDto(evaluatedRule.getRule().getDescription(), locationSpecs,
+       final ArchTestResult data = new ArchTestResult(evaluatedRule.getRule().getDescription(), locationSpecs,
                 violationDescriptions, violationDependencyDescriptions);
         freeplaneClient.sendJson(data);
         System.out.println(data);
         System.out.println();
-
-//        final List<Location> classLocations = locationSpecs.stream()
-//        .map(x -> {
-//            try {
-//                return new URI(x);
-//            } catch (URISyntaxException e) {
-//                throw new IllegalArgumentException(e);
-//            }
-//        })
-//        .map(Location::of)
-//        .collect(Collectors.toList());
-//        final JavaClasses importedClasses = new ClassFileImporter().importLocations(classLocations);
-//        System.out.println(importedClasses.size());
-
     }
 
     private void handle(Collection<Object> violatingObjects, String message, Collection<String> violationDescriptions, Collection<JavaClass> violatingClasses, Collection<String> violationDependencyDescriptions) {
