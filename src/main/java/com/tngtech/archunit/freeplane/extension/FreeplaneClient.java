@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.zip.GZIPOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +35,9 @@ class FreeplaneClient {
         String jsonData = gson.toJson(data); // Serializing
 
         try (Socket socket = new Socket(host, port);
-             OutputStream output = socket.getOutputStream();
-             PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, "UTF-8"), true)) {
+                OutputStream outputStream = socket.getOutputStream();
+                GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream);
+                PrintWriter writer = new PrintWriter(new OutputStreamWriter(gzipOutputStream, "UTF-8"), true)) {
             writer.println(jsonData);
             LOGGER.info("Sent data to Freeplane");
         } catch (IOException e) {
