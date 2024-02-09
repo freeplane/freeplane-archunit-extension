@@ -69,7 +69,7 @@ public class ExtensionIntegrationTest {
 
     @Test
     void handlesSliceCycles() throws Exception {
-        SliceRule rule = slices().matching("..(*)").namingSlices("$1").should().beFreeOfCycles();
+        SliceRule rule = slices().matching("..(*)").namingSlices("slice $1").should().beFreeOfCycles();
         rule.check(importedClasses);
     }
 

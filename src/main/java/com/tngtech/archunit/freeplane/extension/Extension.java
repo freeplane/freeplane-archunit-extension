@@ -5,14 +5,17 @@
  */
 package com.tngtech.archunit.freeplane.extension;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -56,16 +59,19 @@ public class Extension  implements ArchUnitExtension {
         if(! result.hasViolation())
             return;
         List<String> violationDescriptions = new ArrayList<>();
-        Set<JavaClass> violatingClasses = new HashSet<>();
-        SortedSet<String> violationDependencyDescriptions = new TreeSet<>();
+        Map<String, Set<JavaClass>> violatingClasses = new HashMap<>();
+        Set<String> violationDependencyDescriptions = new TreeSet<>();
         result.handleViolations((violatingObjects, message) -> handle(violatingObjects, message, violationDescriptions, violatingClasses, violationDependencyDescriptions));
-        SortedSet<String> locationSpecs = violatingClasses.stream()
-                .map(JavaClass::getSource)
+        Map<String, Set<String>> locationSpecs = violatingClasses
+                .entrySet().stream()
+                .map(e -> new SimpleEntry<>(e.getKey(),
+                        e.getValue().stream().map(JavaClass::getSource)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(Source::getUri)
                 .map(Object::toString)
-                .collect(Collectors.toCollection(TreeSet::new));
+                .collect(Collectors.toSet())))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
        final ArchTestResult data = new ArchTestResult(evaluatedRule.getRule().getDescription(), locationSpecs,
                 violationDescriptions, violationDependencyDescriptions);
         freeplaneClient.sendJson(data);
@@ -73,18 +79,19 @@ public class Extension  implements ArchUnitExtension {
         System.out.println();
     }
 
-    private void handle(Collection<Object> violatingObjects, String message, Collection<String> violationDescriptions, Collection<JavaClass> violatingClasses, Collection<String> violationDependencyDescriptions) {
+    private void handle(Collection<Object> violatingObjects, String message, Collection<String> violationDescriptions, Map<String, Set<JavaClass>> violatingClasses, Collection<String> violationDependencyDescriptions) {
         violationDescriptions.add(message);
         violatingObjects.forEach(violatingObject -> handle(violatingObject, violatingClasses, violationDependencyDescriptions));
     }
 
-    private void handle(Object violatingObject, Collection<JavaClass> violatingClasses, Collection<String> violationDependencyDescriptions) {
+    private void handle(Object violatingObject, Map<String, Set<JavaClass>> violatingClasses, Collection<String> violationDependencyDescriptions) {
         if(violatingObject instanceof JavaAccess<?>) {
             final JavaAccess<?> javaAccess = (JavaAccess<?>)violatingObject;
             final JavaClass originOwner = javaAccess.getOriginOwner();
             final JavaClass targetOwner = javaAccess.getTargetOwner();
-            violatingClasses.add(originOwner);
-            violatingClasses.add(targetOwner);
+            final Set<JavaClass> set = violatingClasses.computeIfAbsent("", key -> new HashSet<>());
+            set.add(originOwner);
+            set.add(targetOwner);
             violationDependencyDescriptions.add(javaAccess.getDescription());
             return;
         }
@@ -92,10 +99,12 @@ public class Extension  implements ArchUnitExtension {
             final Cycle<?> cycle = (Cycle<?>)violatingObject;
             cycle.getEdges().forEach(edge -> {
                 final Object origin = edge.getOrigin();
-                if(origin instanceof Slice)
-                    ((Slice)origin).forEach(violatingClasses::add);
-                else if (origin instanceof ArchModule<?>) {
-                 ((ArchModule<?>)origin).forEach(violatingClasses::add);
+                if(origin instanceof Slice) {
+                    final Set<JavaClass> set = violatingClasses.computeIfAbsent(((Slice)origin).getDescription(), key -> new HashSet<>());
+                    ((Slice)origin).forEach(set::add);
+                } else if (origin instanceof ArchModule<?>) {
+                    final Set<JavaClass> set = violatingClasses.computeIfAbsent(((ArchModule<?>)origin).getName(), key -> new HashSet<>());
+                    ((ArchModule<?>)origin).forEach(set::add);
                 }
             });
             return;
