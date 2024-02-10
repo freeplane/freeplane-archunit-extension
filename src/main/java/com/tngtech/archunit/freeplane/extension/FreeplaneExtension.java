@@ -19,27 +19,29 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import com.tngtech.archunit.core.domain.JavaAccess;
-import com.tngtech.archunit.core.domain.JavaClass;
-import com.tngtech.archunit.core.domain.Source;
+import com.tngtech.archunit.base.HasDescription;
+import com.tngtech.archunit.core.domain.*;
+import com.tngtech.archunit.core.domain.properties.HasName;
 import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.extension.ArchUnitExtension;
 import com.tngtech.archunit.lang.extension.EvaluatedRule;
 import com.tngtech.archunit.library.cycle_detection.Cycle;
 import com.tngtech.archunit.library.dependencies.Slice;
+import com.tngtech.archunit.library.dependencies.SliceDependency;
 import com.tngtech.archunit.library.modules.ArchModule;
+import com.tngtech.archunit.library.modules.ModuleDependency;
 
-public class Extension  implements ArchUnitExtension {
+public class FreeplaneExtension implements ArchUnitExtension {
     public static final String UNIQUE_IDENTIFIER = "freeplane-archunit-extension";
     private FreeplaneClient freeplaneClient;
     private boolean canSendData;
 
-    public Extension(FreeplaneClient freeplaneClient) {
+    public FreeplaneExtension(FreeplaneClient freeplaneClient) {
         this.freeplaneClient = freeplaneClient;
         this.canSendData = true;
     }
 
-    public Extension() {
+    public FreeplaneExtension() {
         this(null);
     }
 
@@ -99,20 +101,61 @@ public class Extension  implements ArchUnitExtension {
             violationDependencyDescriptions.add(javaAccess.getDescription());
             return;
         }
+        if(violatingObject instanceof Dependency) {
+            final Dependency dependency = (Dependency)violatingObject;
+            final JavaClass originOwner = dependency.getOriginClass();
+            final JavaClass targetOwner = dependency.getTargetClass();
+            final Set<JavaClass> set = violatingClasses.computeIfAbsent("", key -> new HashSet<>());
+            set.add(originOwner);
+            set.add(targetOwner);
+            violationDependencyDescriptions.add(dependency.getDescription());
+            return;
+        }
+        if(violatingObject instanceof JavaClass) {
+            final Set<JavaClass> set = violatingClasses.computeIfAbsent("", key -> new HashSet<>());
+            set.add((JavaClass)violatingObject);
+            return;
+        }
+        if(violatingObject instanceof JavaMember) {
+            final Set<JavaClass> set = violatingClasses.computeIfAbsent("", key -> new HashSet<>());
+            set.add(((JavaMember)violatingObject).getOwner());
+            return;
+        }
+
         if(violatingObject instanceof Cycle<?>) {
             final Cycle<?> cycle = (Cycle<?>)violatingObject;
             cycle.getEdges().forEach(edge -> {
                 final Object origin = edge.getOrigin();
                 if(origin instanceof Slice) {
-                    final Set<JavaClass> set = violatingClasses.computeIfAbsent(((Slice)origin).getDescription(), key -> new HashSet<>());
-                    ((Slice)origin).forEach(set::add);
+                    final Set<JavaClass> set = violatingClasses.computeIfAbsent(((HasDescription)origin).getDescription(), key -> new HashSet<>());
+                    set.addAll(((Slice) origin));
                 } else if (origin instanceof ArchModule<?>) {
                     final Set<JavaClass> set = violatingClasses.computeIfAbsent(((ArchModule<?>)origin).getName(), key -> new HashSet<>());
-                    ((ArchModule<?>)origin).forEach(set::add);
+                    set.addAll((ArchModule<?>) origin);
                 }
             });
             return;
         }
+        if(violatingObject instanceof SliceDependency) {
+            final SliceDependency dependency = (SliceDependency)violatingObject;
+            final Set<JavaClass> set = violatingClasses.computeIfAbsent("", key -> new HashSet<>());
+            set.addAll(dependency.getOrigin());
+            set.addAll(dependency.getTarget());
+            violationDependencyDescriptions.add(dependency.getDescription());
+            return;
+        }
+        if(violatingObject instanceof ModuleDependency<?>) {
+            final ModuleDependency<?> dependency = (ModuleDependency<?>)violatingObject;
+            final Set<JavaClass> set = violatingClasses.computeIfAbsent("", key -> new HashSet<>());
+            set.addAll(dependency.getOrigin());
+            set.addAll(dependency.getTarget());
+            dependency.toClassDependencies().stream()
+                    .map(Dependency::getDescription)
+                    .forEach(violationDependencyDescriptions::add);
+            return;
+        }
+
+        return;
     }
 
 }
