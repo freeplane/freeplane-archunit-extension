@@ -19,9 +19,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.base.HasDescription;
 import com.tngtech.archunit.core.domain.*;
-import com.tngtech.archunit.core.domain.properties.HasName;
 import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.extension.ArchUnitExtension;
 import com.tngtech.archunit.lang.extension.EvaluatedRule;
@@ -34,11 +34,9 @@ import com.tngtech.archunit.library.modules.ModuleDependency;
 public class FreeplaneExtension implements ArchUnitExtension {
     public static final String UNIQUE_IDENTIFIER = "freeplane-archunit-extension";
     private FreeplaneClient freeplaneClient;
-    private boolean canSendData;
 
     public FreeplaneExtension(FreeplaneClient freeplaneClient) {
         this.freeplaneClient = freeplaneClient;
-        this.canSendData = true;
     }
 
     public FreeplaneExtension() {
@@ -59,8 +57,6 @@ public class FreeplaneExtension implements ArchUnitExtension {
 
     @Override
     public void handle(EvaluatedRule evaluatedRule) {
-        if(! canSendData)
-            return;
         final EvaluationResult result = evaluatedRule.getResult();
         if(! result.hasViolation())
             return;
@@ -80,7 +76,9 @@ public class FreeplaneExtension implements ArchUnitExtension {
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
        final ArchTestResult data = new ArchTestResult(evaluatedRule.getRule().getDescription(), locationSpecs,
                 violationDescriptions, violationDependencyDescriptions);
-        canSendData = freeplaneClient.sendJson(data);
+        if(! freeplaneClient.sendJson(data))
+            ArchConfiguration.get().configureExtension(FreeplaneExtension.UNIQUE_IDENTIFIER)
+                .setProperty("enabled", false);
         System.out.println(data);
         System.out.println();
     }
