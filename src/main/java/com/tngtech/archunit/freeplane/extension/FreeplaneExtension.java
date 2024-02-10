@@ -18,6 +18,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.base.HasDescription;
@@ -136,17 +137,26 @@ public class FreeplaneExtension implements ArchUnitExtension {
         }
         if(violatingObject instanceof SliceDependency) {
             final SliceDependency dependency = (SliceDependency)violatingObject;
-            final Set<JavaClass> set = violatingClasses.computeIfAbsent("", key -> new HashSet<>());
-            set.addAll(dependency.getOrigin());
-            set.addAll(dependency.getTarget());
-            violationDependencyDescriptions.add(dependency.getDescription());
+            Slice origin = dependency.getOrigin();
+            final Set<JavaClass> originSet = violatingClasses.computeIfAbsent(origin.getDescription(), key -> new HashSet<>());
+            originSet.addAll(origin);
+            Slice target = dependency.getTarget();
+            final Set<JavaClass> targetSet = violatingClasses.computeIfAbsent(target.getDescription(), key -> new HashSet<>());
+            targetSet.addAll(target);
+            String description = dependency.getDescription();
+            Stream.of(description.split(System.lineSeparator()))
+                    .skip(1)
+                    .forEach(violationDependencyDescriptions::add);
             return;
         }
         if(violatingObject instanceof ModuleDependency<?>) {
             final ModuleDependency<?> dependency = (ModuleDependency<?>)violatingObject;
-            final Set<JavaClass> set = violatingClasses.computeIfAbsent("", key -> new HashSet<>());
-            set.addAll(dependency.getOrigin());
-            set.addAll(dependency.getTarget());
+            ArchModule<?> origin = dependency.getOrigin();
+            final Set<JavaClass> originSet = violatingClasses.computeIfAbsent(origin.getName(), key -> new HashSet<>());
+            originSet.addAll(origin);
+            ArchModule<?> target = dependency.getTarget();
+            final Set<JavaClass> targetSet = violatingClasses.computeIfAbsent(target.getName(), key -> new HashSet<>());
+            targetSet.addAll(target);
             dependency.toClassDependencies().stream()
                     .map(Dependency::getDescription)
                     .forEach(violationDependencyDescriptions::add);
