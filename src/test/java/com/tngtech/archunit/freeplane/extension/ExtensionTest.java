@@ -7,7 +7,10 @@ package com.tngtech.archunit.freeplane.extension;
 
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static com.tngtech.archunit.library.modules.syntax.ModuleRuleDefinition.modules;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,7 +35,7 @@ public class ExtensionTest {
     private static EvaluatedRule evaluate(ArchRule rule) {
         return new EvaluatedRule() {
 
-            private final EvaluationResult result = rule.evaluate(importedClasses);;
+            private final EvaluationResult result = rule.evaluate(importedClasses);
 
             @Override
             public ArchRule getRule() {
@@ -55,6 +58,11 @@ public class ExtensionTest {
     @Mock FreeplaneClient freeplaneClient;
     @InjectMocks
     Extension uut;
+
+    @BeforeEach
+    void activateClient() {
+        when(freeplaneClient.sendJson(any())).thenReturn(true);
+    }
 
     @Test
     void handlesJavaAccessViolation() throws Exception {

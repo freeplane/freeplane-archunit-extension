@@ -32,9 +32,11 @@ import com.tngtech.archunit.library.modules.ArchModule;
 public class Extension  implements ArchUnitExtension {
     public static final String UNIQUE_IDENTIFIER = "freeplane-archunit-extension";
     private FreeplaneClient freeplaneClient;
+    private boolean canSendData;
 
     public Extension(FreeplaneClient freeplaneClient) {
         this.freeplaneClient = freeplaneClient;
+        this.canSendData = true;
     }
 
     public Extension() {
@@ -55,6 +57,8 @@ public class Extension  implements ArchUnitExtension {
 
     @Override
     public void handle(EvaluatedRule evaluatedRule) {
+        if(! canSendData)
+            return;
         final EvaluationResult result = evaluatedRule.getResult();
         if(! result.hasViolation())
             return;
@@ -74,7 +78,7 @@ public class Extension  implements ArchUnitExtension {
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
        final ArchTestResult data = new ArchTestResult(evaluatedRule.getRule().getDescription(), locationSpecs,
                 violationDescriptions, violationDependencyDescriptions);
-        freeplaneClient.sendJson(data);
+        canSendData = freeplaneClient.sendJson(data);
         System.out.println(data);
         System.out.println();
     }

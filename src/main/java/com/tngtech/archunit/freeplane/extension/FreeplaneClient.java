@@ -30,7 +30,7 @@ class FreeplaneClient {
     }
 
 
-    void sendJson(ArchTestResult data) {
+    boolean sendJson(ArchTestResult data) {
         Gson gson = new Gson();
         String jsonData = gson.toJson(data); // Serializing
 
@@ -40,8 +40,10 @@ class FreeplaneClient {
                 PrintWriter writer = new PrintWriter(new OutputStreamWriter(gzipOutputStream, "UTF-8"), true)) {
             writer.println(jsonData);
             LOGGER.info("Sent data to Freeplane");
+            return true;
         } catch (IOException e) {
             LOGGER.error("Can't send data to Freeplane");
+            return false;
         }
     }
 }
