@@ -50,15 +50,15 @@ Note: The default port is 6297, but you can change it in this file and in Freepl
 
 ## Viewing Test Results in Freeplane
 
-This extension requires Freeplane version 1.11.11 or later. 
+This extension requires Freeplane version 1.11.11 or later.
 
-Ensure Freeplane is running when executing your ArchUnit tests. For the extension to display the results, switch to Code Explorer mode by navigating through the menu: Maps -> Modes -> Code Explorer. Then, open the "Architecture Test Results" tab at the bottom of the interface. Activate listening on the designated port by clicking on the leftmost button in this tab. Once enabled, this setting will persist over Freeplane restarts until manually disabled. This allows for a more interactive debugging experience by automatically displaying test results in Freeplane if any errors are detected by the extension.
+Ensure Freeplane is running when executing your ArchUnit tests. For the extension to display the results, switch to Code Explorer mode by navigating through the menu: Maps -> Modes -> Code Explorer. Then, open the "Architecture Violations" tab at the bottom of the interface. Activate listening on the designated port by clicking on the leftmost button in this tab. Once enabled, this setting will persist over Freeplane restarts until manually disabled. This allows for a more interactive debugging experience by automatically displaying test results in Freeplane if any errors are detected by the extension.
 
-To view recorded violations, simply double-click on the violated rule listed in the table within the "Architecture Test Results" tab, or select the rule and press the "run" button. This action will display the details of the violations, enhancing your ability to analyze and address them directly from within Freeplane.
+To view recorded violations, simply double-click on the violated rule listed in the table within the "Architecture Violations" tab, or select the rule and press the "run" button. This action will display the details of the violations, enhancing your ability to analyze and address them directly from within Freeplane.
 
 ## Screenshots
 
-![Freeplane Architecture Test Result View](images/testResultsMap.png)
+![Architecture Violations View](images/architectureViolationsView.png)
 
 ## Contributing
 Contributions are welcome! Feel free to submit pull requests or open issues to suggest improvements or report bugs.
