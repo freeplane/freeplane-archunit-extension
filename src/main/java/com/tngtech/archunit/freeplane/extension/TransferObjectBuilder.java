@@ -144,7 +144,7 @@ class TransferObjectBuilder {
     }
 
 
-    ArchTestResult buildTransferObject(String ruleDescription) {
+    ArchitectureViolations buildTransferObject(String ruleDescription) {
         Map<String, Set<String>> locationSpecs = violatingClasses
                 .entrySet().stream()
                 .map(e -> new SimpleEntry<>(e.getKey(),
@@ -155,7 +155,7 @@ class TransferObjectBuilder {
                                 .map(Object::toString)
                                 .collect(Collectors.toSet())))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-        return new ArchTestResult(ruleDescription, locationSpecs,
+        return new ArchitectureViolations(ruleDescription, locationSpecs,
                 violationDescriptions, violationDependencyDescriptions, isNoCyclesConditionChecked);
     }
 }

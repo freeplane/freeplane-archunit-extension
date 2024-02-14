@@ -9,13 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ArchTestResult {
+public class ArchitectureViolations {
     final public String violatedRuleDescription;
     final public Map<String, Set<String>> violatingClassLocations;
     final public List<String> violationDescriptions;
     final public Set<String> violationDependencyDescriptions;
     final public boolean isNoCyclesConditionChecked;
-    public ArchTestResult(String violatedRuleDescription,
+    public ArchitectureViolations(String violatedRuleDescription,
             Map<String, Set<String>> violatingClassLocations,
             List<String> violationDescriptions,
             Set<String> violationDependencyDescriptions,

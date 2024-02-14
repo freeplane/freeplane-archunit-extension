@@ -30,7 +30,7 @@ class FreeplaneClient {
     }
 
 
-    boolean sendJson(ArchTestResult data) {
+    boolean sendJson(ArchitectureViolations data) {
         Gson gson = new Gson();
         String jsonData = gson.toJson(data); // Serializing
 

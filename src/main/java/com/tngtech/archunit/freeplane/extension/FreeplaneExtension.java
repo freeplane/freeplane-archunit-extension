@@ -45,8 +45,8 @@ public class FreeplaneExtension implements ArchUnitExtension {
         TransferObjectBuilder transferObjectBuilder = new TransferObjectBuilder();
         result.handleViolations(transferObjectBuilder::handle);
 
-        ArchTestResult archTestResult = transferObjectBuilder.buildTransferObject(evaluatedRule.getRule().getDescription());
-        if(! freeplaneClient.sendJson(archTestResult))
+        ArchitectureViolations architectureViolations = transferObjectBuilder.buildTransferObject(evaluatedRule.getRule().getDescription());
+        if(! freeplaneClient.sendJson(architectureViolations))
             ArchConfiguration.get().configureExtension(FreeplaneExtension.UNIQUE_IDENTIFIER)
                 .setProperty("enabled", false);
     }
