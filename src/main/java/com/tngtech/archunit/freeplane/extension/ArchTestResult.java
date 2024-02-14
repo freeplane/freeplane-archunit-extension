@@ -14,23 +14,26 @@ public class ArchTestResult {
     final public Map<String, Set<String>> violatingClassLocations;
     final public List<String> violationDescriptions;
     final public Set<String> violationDependencyDescriptions;
+    final public boolean isNoCyclesConditionChecked;
     public ArchTestResult(String violatedRuleDescription,
             Map<String, Set<String>> violatingClassLocations,
             List<String> violationDescriptions,
-            Set<String> violationDependencyDescriptions) {
+            Set<String> violationDependencyDescriptions,
+            boolean isNoCyclesConditionChecked) {
         super();
         this.violatedRuleDescription = violatedRuleDescription;
         this.violatingClassLocations = violatingClassLocations;
         this.violationDescriptions = violationDescriptions;
         this.violationDependencyDescriptions = violationDependencyDescriptions;
+        this.isNoCyclesConditionChecked = isNoCyclesConditionChecked;
     }
     @Override
     public String toString() {
-        return "ArchTestResult ["
-                + "violatedRuleDescription=" + violatedRuleDescription + "\n"
-                + "violatingClassLocations=" + violatingClassLocations + "\n"
-                + "violationDescriptions=" + violationDescriptions + "\n"
-                + "violationDependencyDescriptions=" + violationDependencyDescriptions + "]";
+        return "ArchTestResult [violatedRuleDescription=" + violatedRuleDescription
+                + ", violatingClassLocations=" + violatingClassLocations
+                + ", violationDescriptions=" + violationDescriptions
+                + ", violationDependencyDescriptions=" + violationDependencyDescriptions
+                + ", isNoCyclesConditionChecked=" + isNoCyclesConditionChecked + "]";
     }
 
 }

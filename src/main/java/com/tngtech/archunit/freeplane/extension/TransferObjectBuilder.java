@@ -17,11 +17,13 @@ class TransferObjectBuilder {
     private final List<String> violationDescriptions;
     private final Map<String, Set<JavaClass>> violatingClasses;
     private final Set<String> violationDependencyDescriptions;
+    private boolean isNoCyclesConditionChecked;
 
     TransferObjectBuilder() {
         this.violationDescriptions = new ArrayList<>();
         this.violatingClasses = new HashMap<>();
         this.violationDependencyDescriptions = new TreeSet<>();
+        this.isNoCyclesConditionChecked = false;
     }
 
     void handle(Collection<Object> violatingObjects, String message) {
@@ -63,6 +65,7 @@ class TransferObjectBuilder {
         }
 
         if(violatingObject instanceof Cycle<?>) {
+            isNoCyclesConditionChecked = true;
             final Cycle<?> cycle = (Cycle<?>)violatingObject;
             cycle.getEdges().forEach(edge -> {
                 final Object origin = edge.getOrigin();
@@ -153,6 +156,6 @@ class TransferObjectBuilder {
                                 .collect(Collectors.toSet())))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
         return new ArchTestResult(ruleDescription, locationSpecs,
-                violationDescriptions, violationDependencyDescriptions);
+                violationDescriptions, violationDependencyDescriptions, isNoCyclesConditionChecked);
     }
 }
