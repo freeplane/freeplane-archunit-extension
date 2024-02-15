@@ -13,9 +13,9 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 class TransferObjectBuilder {
-    private final List<String> violationDescriptions;
+    private final List<ViolationDescription> violationDescriptions;
     private final Map<String, Set<JavaClass>> violatingClasses;
-    private final Set<String> violationDependencyDescriptions;
+    private SortedSet<String> violationDependencyDescriptions;
     private boolean isNoCyclesConditionChecked;
 
     TransferObjectBuilder() {
@@ -26,8 +26,9 @@ class TransferObjectBuilder {
     }
 
     void handle(Collection<Object> violatingObjects, String message) {
-        violationDescriptions.add(message);
+        violationDependencyDescriptions = new TreeSet<>();
         violatingObjects.forEach(this::handle);
+        violationDescriptions.add(new ViolationDescription(message, violationDependencyDescriptions));
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")
@@ -146,6 +147,6 @@ class TransferObjectBuilder {
                                 .collect(Collectors.toSet())))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
         return new ArchitectureViolations(ruleDescription, locationSpecs,
-                violationDescriptions, violationDependencyDescriptions, isNoCyclesConditionChecked);
+                violationDescriptions, isNoCyclesConditionChecked);
     }
 }
