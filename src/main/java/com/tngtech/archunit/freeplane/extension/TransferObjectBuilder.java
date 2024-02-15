@@ -11,7 +11,6 @@ import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 class TransferObjectBuilder {
     private final List<String> violationDescriptions;
@@ -68,81 +67,73 @@ class TransferObjectBuilder {
             isNoCyclesConditionChecked = true;
             final Cycle<?> cycle = (Cycle<?>)violatingObject;
             cycle.getEdges().forEach(edge -> {
-                final Object origin = edge.getOrigin();
-                final Object target = edge.getTarget();
-                if(origin instanceof Slice && target instanceof Slice)
-                    addViolatingClasses((Slice) origin, (Slice) target);
-                else if (origin instanceof ArchModule<?> && target instanceof ArchModule<?>)
-                    addViolatingClasses((ArchModule<?>) origin, (ArchModule<?>) target);
+                final Object originObject = edge.getOrigin();
+                final Object targetObject = edge.getTarget();
+                if(originObject instanceof Slice && targetObject instanceof Slice) {
+                    Slice origin = ((Slice)originObject);
+                    Slice target = ((Slice)targetObject);
+                    Set<JavaClass> originClasses = violatingClassSet(origin.getDescription());
+                    Set<JavaClass> targetClasses = violatingClassSet(target.getDescription());
+                    origin.getDependenciesFromSelf().stream()
+                            .filter(d -> target.contains(d.getTargetClass()))
+                            .forEach(d -> {
+                                originClasses.add(d.getOriginClass());
+                                targetClasses.add(d.getTargetClass());
+                            });
+                } else if (originObject instanceof ArchModule<?> && targetObject instanceof ArchModule<?>) {
+                    ArchModule<?> origin = (ArchModule<?>)originObject;
+                    ArchModule<?> target = (ArchModule<?>)targetObject;
+                    Set<JavaClass> originClasses = violatingClassSet(origin.getName());
+                    Set<JavaClass> targetClasses = violatingClassSet(target.getName());
+                    origin.getClassDependenciesFromSelf().stream()
+                            .filter(d -> target.contains(d.getTargetClass()))
+                            .forEach(d -> {
+                                originClasses.add(d.getOriginClass());
+                                targetClasses.add(d.getTargetClass());
+                            });
+                }
             });
             return;
         }
+
         if(violatingObject instanceof SliceDependency) {
             final SliceDependency dependency = (SliceDependency)violatingObject;
-            addViolatingClasses(dependency.getOrigin(), dependency.getTarget());
-
-            String description = dependency.getDescription();
-            Stream.of(description.split(System.lineSeparator()))
-                    .skip(1)
-                    .forEach(violationDependencyDescriptions::add);
+            Slice origin = dependency.getOrigin();
+            Slice target = dependency.getTarget();
+            Set<JavaClass> originClasses = violatingClassSet(origin.getDescription());
+            Set<JavaClass> targetClasses = violatingClassSet(target.getDescription());
+            origin.stream()
+                    .map(JavaClass::getDirectDependenciesFromSelf)
+                    .flatMap(Set::stream)
+                    .filter(d -> target.contains(d.getTargetClass()))
+                    .forEach(d -> {
+                        originClasses.add(d.getOriginClass());
+                        targetClasses.add(d.getTargetClass());
+                        violationDependencyDescriptions.add(d.getDescription());
+                    });
             return;
         }
+
         if(violatingObject instanceof ModuleDependency<?>) {
             final ModuleDependency<?> dependency = (ModuleDependency<?>)violatingObject;
             ArchModule<?> origin = dependency.getOrigin();
             ArchModule<?> target = dependency.getTarget();
-            addViolatingClasses(origin, target);
-
-            dependency.toClassDependencies().stream()
-                    .map(Dependency::getDescription)
-                    .forEach(violationDependencyDescriptions::add);
+            Set<JavaClass> originClasses = violatingClassSet(origin.getName());
+            Set<JavaClass> targetClasses = violatingClassSet(target.getName());
+            dependency.toClassDependencies()
+            .forEach(d -> {
+                originClasses.add(d.getOriginClass());
+                targetClasses.add(d.getTargetClass());
+                violationDependencyDescriptions.add(d.getDescription());
+            });
             return;
         }
         return;
     }
 
-    private void addViolatingClasses(ArchModule<?> origin, ArchModule<?> target) {
-        Stream<JavaClass> violatingOriginClasses = getViolatingOriginClasses(origin, target);
-        Stream<JavaClass> violatingTargetClasses = getViolatingTargetClasses(origin, target);
-        addViolatingClasses(origin.getName(), violatingOriginClasses, target.getName(), violatingTargetClasses);
-    }
-
-    private void addViolatingClasses(String originName,
-                                            Stream<JavaClass> violatingOriginClasses,
-                                            String targetName,
-                                            Stream<JavaClass> violatingTargetClasses) {
-        final Set<JavaClass> originSet = violatingClassSet(originName);
-        violatingOriginClasses.forEach(originSet::add);
-        final Set<JavaClass> targetSet = violatingClassSet( targetName);
-        violatingTargetClasses.forEach(targetSet::add);
-    }
-
-    private void addViolatingClasses(Slice origin, Slice target) {
-        Stream<JavaClass> violatingOriginClasses = getViolatingOriginClasses(origin, target);
-        Stream<JavaClass> violatingTargetClasses = getViolatingTargetClasses(origin, target);
-        addViolatingClasses(origin.getDescription(), violatingOriginClasses, target.getDescription(), violatingTargetClasses);
-    }
-
     private Set<JavaClass> violatingClassSet(String name) {
         return violatingClasses.computeIfAbsent(name, key -> new HashSet<>());
     }
-
-    private static Stream<JavaClass> getViolatingOriginClasses(Set<JavaClass> origin, Set<JavaClass> target) {
-        return target.stream()
-                .map(JavaClass::getDirectDependenciesToSelf)
-                .flatMap(Collection::stream)
-                .map(Dependency::getOriginClass)
-                .filter(origin::contains);
-    }
-
-    private static Stream<JavaClass> getViolatingTargetClasses(Set<JavaClass> origin, Set<JavaClass> target) {
-        return origin.stream()
-                .map(JavaClass::getDirectDependenciesFromSelf)
-                .flatMap(Collection::stream)
-                .map(Dependency::getTargetClass)
-                .filter(target::contains);
-    }
-
 
     ArchitectureViolations buildTransferObject(String ruleDescription) {
         Map<String, Set<String>> locationSpecs = violatingClasses
