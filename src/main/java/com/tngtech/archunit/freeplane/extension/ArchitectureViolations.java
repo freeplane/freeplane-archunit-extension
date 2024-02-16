@@ -5,30 +5,52 @@
  */
 package com.tngtech.archunit.freeplane.extension;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class ArchitectureViolations {
-    final public String violatedRuleDescription;
-    final public Map<String, Set<String>> violatingClassLocations;
-    final public List<ViolationDescription> violationDescriptions;
-    final public boolean isNoCyclesConditionChecked;
+    final private String violatedRuleDescription;
+    private Map<String, Set<String>> violatingClassLocations;
+    private List<ViolationDescription> violationDescriptions;
     public ArchitectureViolations(String violatedRuleDescription,
             Map<String, Set<String>> violatingClassLocations,
-            List<ViolationDescription> violationDescriptions,
-            boolean isNoCyclesConditionChecked) {
+            List<ViolationDescription> violationDescriptions) {
         super();
         this.violatedRuleDescription = violatedRuleDescription;
         this.violatingClassLocations = violatingClassLocations;
         this.violationDescriptions = violationDescriptions;
-        this.isNoCyclesConditionChecked = isNoCyclesConditionChecked;
     }
+
+
+
+    public String getViolatedRuleDescription() {
+        return violatedRuleDescription;
+    }
+
+
+
+    public Map<String, Set<String>> getViolatingClassLocations() {
+        if(violatingClassLocations == null)
+            violatingClassLocations = Collections.emptyMap();
+        return violatingClassLocations;
+    }
+
+
+
+    public List<ViolationDescription> getViolationDescriptions() {
+        if(violationDescriptions == null)
+            violationDescriptions = Collections.emptyList();
+        return violationDescriptions;
+    }
+
+
+
     @Override
     public String toString() {
         return "ArchTestResult [violatedRuleDescription=" + violatedRuleDescription
                 + ", violatingClassLocations=" + violatingClassLocations
-                + ", violationDescriptions=" + violationDescriptions
-                + ", isNoCyclesConditionChecked=" + isNoCyclesConditionChecked + "]";
+                + ", violationDescriptions=" + violationDescriptions + "]";
     }
 }

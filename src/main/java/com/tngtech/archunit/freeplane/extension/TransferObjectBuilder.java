@@ -16,19 +16,19 @@ class TransferObjectBuilder {
     private final List<ViolationDescription> violationDescriptions;
     private final Map<String, Set<JavaClass>> violatingClasses;
     private SortedSet<String> violationDependencyDescriptions;
-    private boolean isNoCyclesConditionChecked;
+    private SortedSet<String> cyclicDependencyDescriptions;
 
     TransferObjectBuilder() {
         this.violationDescriptions = new ArrayList<>();
         this.violatingClasses = new HashMap<>();
         this.violationDependencyDescriptions = new TreeSet<>();
-        this.isNoCyclesConditionChecked = false;
     }
 
     void handle(Collection<Object> violatingObjects, String message) {
         violationDependencyDescriptions = new TreeSet<>();
+        cyclicDependencyDescriptions = new TreeSet<>();
         violatingObjects.forEach(this::handle);
-        violationDescriptions.add(new ViolationDescription(message, violationDependencyDescriptions));
+        violationDescriptions.add(new ViolationDescription(message, violationDependencyDescriptions, cyclicDependencyDescriptions));
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")
@@ -65,7 +65,6 @@ class TransferObjectBuilder {
         }
 
         if(violatingObject instanceof Cycle<?>) {
-            isNoCyclesConditionChecked = true;
             final Cycle<?> cycle = (Cycle<?>)violatingObject;
             cycle.getEdges().forEach(edge -> {
                 final Object originObject = edge.getOrigin();
@@ -78,6 +77,7 @@ class TransferObjectBuilder {
                     origin.getDependenciesFromSelf().stream()
                             .filter(d -> target.contains(d.getTargetClass()))
                             .forEach(d -> {
+                                cyclicDependencyDescriptions.add(d.getDescription());
                                 originClasses.add(d.getOriginClass());
                                 targetClasses.add(d.getTargetClass());
                             });
@@ -86,12 +86,15 @@ class TransferObjectBuilder {
                     ArchModule<?> target = (ArchModule<?>)targetObject;
                     Set<JavaClass> originClasses = violatingClassSet(origin.getName());
                     Set<JavaClass> targetClasses = violatingClassSet(target.getName());
-                    origin.getClassDependenciesFromSelf().stream()
-                            .filter(d -> target.contains(d.getTargetClass()))
-                            .forEach(d -> {
-                                originClasses.add(d.getOriginClass());
-                                targetClasses.add(d.getTargetClass());
-                            });
+                    origin.getModuleDependenciesFromSelf()
+                    .stream()
+                    .filter(d -> target.equals(d.getTarget()))
+                    .flatMap(d -> d.toClassDependencies().stream())
+                    .forEach(d -> {
+                        cyclicDependencyDescriptions.add(d.getDescription());
+                        originClasses.add(d.getOriginClass());
+                        targetClasses.add(d.getTargetClass());
+                    });
                 }
             });
             return;
@@ -148,6 +151,6 @@ class TransferObjectBuilder {
                                 .collect(Collectors.toSet())))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
         return new ArchitectureViolations(ruleDescription, locationSpecs,
-                violationDescriptions, isNoCyclesConditionChecked);
+                violationDescriptions);
     }
 }
