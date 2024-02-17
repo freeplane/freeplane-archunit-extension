@@ -7,12 +7,15 @@ public class ViolationDescription {
     private String fullDescription;
     private SortedSet<String> violationDependencyDescriptions;
     private SortedSet<String> cyclicDependencyDescriptions;
+    private SortedSet<String> violatingClasses;
 
     public ViolationDescription(String fullDescription, SortedSet<String> violationDependencyDescriptions,
-                                SortedSet<String> cyclicDependencyDescriptions) {
+                                SortedSet<String> cyclicDependencyDescriptions,
+                                SortedSet<String> violatingClasses) {
         this.fullDescription = fullDescription;
         this.violationDependencyDescriptions = violationDependencyDescriptions;
         this.cyclicDependencyDescriptions = cyclicDependencyDescriptions;
+        this.violatingClasses = violatingClasses;
     }
 
 
@@ -28,7 +31,6 @@ public class ViolationDescription {
     }
 
 
-
     public SortedSet<String> getCyclicDependencyDescriptions() {
         if(cyclicDependencyDescriptions == null)
             cyclicDependencyDescriptions = Collections.emptySortedSet();
@@ -37,12 +39,10 @@ public class ViolationDescription {
 
 
 
-    @Override
-    public String toString() {
-        return "ViolationDescription{" +
-                "fullDescription='" + fullDescription + '\'' +
-                ", violationDependencyDescriptions=" + getViolationDependencyDescriptions() +
-                ", cyclicDependencyDescriptions=" + getCyclicDependencyDescriptions() +
-                '}';
+    public SortedSet<String> getViolatingClasses() {
+        if(violatingClasses == null)
+            violatingClasses = Collections.emptySortedSet();
+        return violatingClasses;
     }
+
 }

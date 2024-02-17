@@ -17,18 +17,22 @@ class TransferObjectBuilder {
     private final Map<String, Set<JavaClass>> violatingClasses;
     private SortedSet<String> violationDependencyDescriptions;
     private SortedSet<String> cyclicDependencyDescriptions;
+    private SortedSet<String> violatingClassesGroup;
 
     TransferObjectBuilder() {
         this.violationDescriptions = new ArrayList<>();
         this.violatingClasses = new HashMap<>();
-        this.violationDependencyDescriptions = new TreeSet<>();
+        this.violationDependencyDescriptions = Collections.emptySortedSet();
+        this.cyclicDependencyDescriptions = Collections.emptySortedSet();
+        this.violatingClassesGroup = Collections.emptySortedSet();
     }
 
     void handle(Collection<Object> violatingObjects, String message) {
         violationDependencyDescriptions = new TreeSet<>();
         cyclicDependencyDescriptions = new TreeSet<>();
+        violatingClassesGroup = new TreeSet<>();
         violatingObjects.forEach(this::handle);
-        violationDescriptions.add(new ViolationDescription(message, violationDependencyDescriptions, cyclicDependencyDescriptions));
+        violationDescriptions.add(new ViolationDescription(message, violationDependencyDescriptions, cyclicDependencyDescriptions, violatingClassesGroup));
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")
@@ -40,7 +44,10 @@ class TransferObjectBuilder {
             final Set<JavaClass> set = violatingClassSet("");
             set.add(originOwner);
             set.add(targetOwner);
-            violationDependencyDescriptions.add(javaAccess.getDescription());
+            if(originOwner.equals(targetOwner))
+                violatingClassesGroup.add(originOwner.getName());
+            else
+                violationDependencyDescriptions.add(javaAccess.getDescription());
             return;
         }
         if(violatingObject instanceof Dependency) {
@@ -55,12 +62,16 @@ class TransferObjectBuilder {
         }
         if(violatingObject instanceof JavaClass) {
             final Set<JavaClass> set = violatingClassSet("");
-            set.add((JavaClass)violatingObject);
+            final JavaClass violatingClass = (JavaClass)violatingObject;
+            set.add(violatingClass);
+            violatingClassesGroup.add(violatingClass.getName());
             return;
         }
         if(violatingObject instanceof JavaMember) {
             final Set<JavaClass> set = violatingClassSet("");
-            set.add(((JavaMember)violatingObject).getOwner());
+            final JavaClass violatingClass = ((JavaMember)violatingObject).getOwner();
+            set.add(violatingClass);
+            violatingClassesGroup.add(violatingClass.getName());
             return;
         }
 
