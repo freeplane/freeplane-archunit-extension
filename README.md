@@ -17,7 +17,7 @@ To incorporate this extension into your project, it's essential to add it to you
 Add the following line to your `build.gradle` file under dependencies:
 
 ```groovy
-testImplementation 'org.freeplane.archunit:freeplane-archunit-extension:0.0.1'
+testImplementation 'org.freeplane.archunit:freeplane-archunit-extension:0.0.2'
 ```
 
 ### Maven
@@ -28,7 +28,7 @@ For Maven projects, add the dependency snippet to your pom.xml:
 <dependency>
   <groupId>org.freeplane.archunit</groupId>
   <artifactId>freeplane-archunit-extension</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -39,7 +39,7 @@ For setups not utilizing Gradle or Maven, integrate the extension by directly in
 
 ## Extension Configuration
 
-To enable the extension and configure the communication port, create an archunit.properties file in your project with the following content:
+To enable the extension and configure the communication port, create in your project test resources folder an archunit.properties file with the following content:
 
 ```properties
 extension.freeplane-archunit-extension.enabled=true
