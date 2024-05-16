@@ -10,8 +10,9 @@ This project provides an extension for ArchUnit that allows displaying ArchUnit 
 
 ## Getting Started
 
-To incorporate this extension into your project, it's essential to add it to your test classpath. This can be achieved through various methods, including adding it as a dependency in your build system. Below, you'll find instructions for doing so using Gradle and Maven.
-
+To incorporate this extension into your project, it's essential to add it to your test classpath, ensuring ArchUnit version 1.2.0 or later is also included.
+This can be achieved through various methods, such as adding it as a dependency in your build system.
+Below, you'll find instructions for doing so using Gradle and Maven.
 ### Gradle
 
 Add the following line to your `build.gradle` file under dependencies:
